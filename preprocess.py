@@ -1,7 +1,7 @@
-from collections import deque
 import gym
-import cv2
+from collections import deque
 import numpy as np
+import cv2
 
 class EpisodeEnv(gym.Wrapper):
     def __init__(self, env):
@@ -79,3 +79,66 @@ class frameskipper(gym.Wrapper):
 
     def seed(self, s):
         self.rng.seed(s) 
+
+class scaleobsframe(gym.ObservationWrapper): # ensure observations are within a reasonable range for NN.
+    def __init__(self, env):
+        gym.ObservationWrapper.__init__(self, env)
+        self.observation_space=gym.spaces.Box(low=0, high=1, shape=env.observation_space.shape, dtype=np.float32)
+
+    def obs(self, observ):
+        return np.array(observ).astype(np.float32) / 255.0
+    
+
+class Stackframe(gym.Wrapper):
+    def __init__(self, env, n):
+        gym.Wrapper.__init__(self, env)
+        self.n=n #n number of frames to stack
+        self.frames=deque([], maxlen=n)
+        shapes=env.observation_space.shape
+        self.observation_space=gym.spaces.Box(low=0, high=255, shape=(shapes[:-1] + (shapes[-1] * n,)), dtype=env.observation_space.dtype)
+
+    def reset(self):
+        ob = self.env.reset()
+        for _ in range(self.k):
+            self.frames.append(ob)
+        return self._get_ob()
+
+    def step(self, action):
+        ob, reward, done, info = self.env.step(action)
+        self.frames.append(ob)
+        return self._get_ob(), reward, done, info
+
+    def _get_ob(self):
+        assert len(self.frames) == self.k
+        return LazyFrames(list(self.frames))
+    
+
+class LazyFrames(object):# ensures common frames b/w observations are only stored once.
+    def __init__(self, nframe):
+        self.frames=nframe
+        self.cache=None#for caching
+
+    def concframes(self):
+        if self.cache is None:
+            self.cache=np.concatenate(self.frames, axis=-1)
+            self.frames=None
+        return self.cache
+
+    def __array__(self, dtype=None):
+        cache=self.concframes()
+        if dtype is not None:
+            cache=cache.astype(dtype)
+        return cache
+
+    def __len__(self):
+        return len(self.concframes())
+
+    def __getitem__(self, i):
+        return self.concframes()[i]
+
+    def count(self):
+        frames=self.concframes()
+        return frames.shape[frames.ndim - 1]
+
+    def frame(self, i):
+        return self.concframes()[..., i]
