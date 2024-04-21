@@ -1,10 +1,8 @@
 import tensorflow as tf
 import numpy as np
-observation_shape =0 #TODO 
-num_actions=0 #TODO
 
 class ValueNetwork(tf.keras.Model):
-    def __init__(self):
+    def __init__(self,observation_shape):
         super(ValueNetwork,self).__init__(name='Network_for_value_calc')        
         self.convlayer1=tf.keras.layers.Conv2D(filters=32,kernel_size=(8, 8),strides=(4, 4),padding='same',input_shape=observation_shape,kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')
         self.convlayer2=tf.keras.layers.Conv2D(filters=64,kernel_size=(4, 4),strides=(2, 2),padding='same',kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')
@@ -21,7 +19,7 @@ class ValueNetwork(tf.keras.Model):
         return y
     
 class PolicyNetwork(tf.keras.Model):
-    def __init__(self):
+    def __init__(self,num_actions,observation_shape):
         super(PolicyNetwork,self).__init__(name='Network_for_polic')  
         self.convlayer1=tf.keras.layers.Conv2D(filters=32,kernel_size=(8,8),strides=(4,4),padding='same',input_shape=observation_shape,kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')  
         self.convlayer2 =tf.keras.layers.Conv2D(filters=64,kernel_size=(4,4),strides=(2,2),padding='same',kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')  
