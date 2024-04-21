@@ -4,6 +4,8 @@ import numpy as np
 starting_time=0
 number_of_actions=-1 #TODO
 gamma=.9#TODO
+horizon=0#TODO
+gae_lambda=0#TODO
 class Envcontrol:
     def controller(name,connection):
         while True:
@@ -90,3 +92,20 @@ class Maincontroller:
         self.val.append(next_state_value_estimate[0])  
         self.delta.append(self.rew.get(t) + (1 if episode_done else 0)*gamma*self.val.get(t+1)-self.val.get(t))
         self.last_observation=next_state
+    
+    def calc_advantages(self,ending_time):
+        advantages=[]
+        values = []
+        cumulative_advantage = 0
+        last_value_sample = self.val.get(ending_time)
+        for i in range(horizon):
+            if self.done[ending_time - i - 1]:
+                cumulative_advantage = 0
+                last_value_sample = 0
+            cumulative_advantage = self.delta[ending_time - i - 1] + (gamma * gae_lambda * cumulative_advantage)
+            advantages.append(cumulative_advantage)
+            last_value_sample = gamma * last_value_sample + self.rew[ending_time - i - 1]
+            values.append(last_value_sample)
+        self.estimate_the_advantages.extend(reversed(advantages))
+        self.estimate_the_values.extend(reversed(values))
+
