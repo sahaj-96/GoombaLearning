@@ -27,7 +27,7 @@ class EpisodeEnv(gym.Wrapper):
         return observ
 
 class ScaleRwrd(gym.RewardWrapper):
-    def rwrd(self, rwrd):
+    def reward(self, rwrd):
 
         return rwrd * 0.1#ensures reward within a spec range for PPO 
 
