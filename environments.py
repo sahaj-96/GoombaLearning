@@ -2,10 +2,12 @@ from multiprocessing import Pipe,Process
 import tensorflow as tf
 import numpy as np
 starting_time=0
-number_of_actions=-1 #TODO
-gamma=.9#TODO
-horizon=0#TODO
-gae_lambda=0#TODO
+gamma=.99
+gae_lambda=0.99
+version=1 # there are for versions u can fill here any of 1,2,3,4
+from . import env_maker
+version=env_maker.version
+env,_,_=env_maker.make_env(env_idx=version-1)
 class Envcontrol:
     def controller(name,connection):
         while True:
@@ -18,9 +20,9 @@ class Envcontrol:
                 break
             else:
                 raise Exception(f"Unknown command {command}")
-    def __init__(self,n):
+    def __init__(self,name,env):
         parent_side,child_side=Pipe()
-        self.process=Process(target=Envcontrol.controller,args=(n,child_side))
+        self.process=Process(target=Envcontrol.controller,args=(name,child_side))
         self.process.start()
         self.connection=parent_side
     def reset(self):
@@ -62,13 +64,13 @@ class Maincontroller:
         self.act = self.rew = self.val = self.policy = self.delta = self.done = TimeOrderedList(first_time=starting_time)
         self.episode_start_time = 0
         self.rew_ofeach_episode = self.xpos_ofeach_episode = self.rew_ofcurr_episode = self.xpos_ofcurr_episode = []
-        self.estimate_the_advantages = self.estimate_the_values = TimeOrderedList(first_t=starting_time)
+        self.estimate_the_advantages = self.estimate_the_values = TimeOrderedList(first_time=starting_time)
 
-    def take_step_in_env(self,p_nn,v_nn,t):      
+    def take_step_in_env(self,p_nn,v_nn,t,number_of_actions):      
         if t==starting_time:
             val_0=v_nn(self.last_observation).numpy()[0]
             self.val.append(val_0[0])
-        policy_t=p_nn(self.last_obs).numpy()[0]
+        policy_t=p_nn(self.last_observation).numpy()[0]
         action_t=np.random.choice(number_of_actions,1,p=policy_t)[0] #1 because i need to draw a single action
         next_state,step_reward,episode_done,step_info=self.env.step(action_t)        
         next_state=np.expand_dims(next_state,axis=0)
@@ -95,7 +97,7 @@ class Maincontroller:
         self.delta.append(self.rew.get(t) + (1 if episode_done else 0)*gamma*self.val.get(t+1)-self.val.get(t))
         self.last_observation=next_state
     
-    def calc_advantages(self,ending_time):
+    def calc_advantages(self,ending_time,horizon):
         advantages=[]
         values = []
         cumulative_advantage = 0
@@ -111,7 +113,7 @@ class Maincontroller:
         self.estimate_the_advantages.extend(reversed(advantages))
         self.estimate_the_values.extend(reversed(values))
 
-    def get_data(self,ending_time):
+    def get_data(self,ending_time,horizon):
         obs_range=[self.observation[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
         act_range=[self.act[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
         policy_range=[self.policy[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
@@ -119,7 +121,7 @@ class Maincontroller:
         val_range=[self.estimate_the_values[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
         return obs_range, act_range, policy_range, adv_range, val_range
 
-    def clear_history(self, ending_time):
+    def clear_history(self, ending_time,horizon):
         self.observation.clear_through(ending_time - horizon - 10)
         self.act.clear_through(ending_time - horizon - 1)
         self.rew.clear_through(ending_time - horizon - 1)
