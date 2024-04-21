@@ -48,7 +48,11 @@ class TimeOrderedList:
     def append(self,to_add):
         self.list.append(to_add)
     def get(self, at_time_t):
-        return self.list[at_time_t-self.first_time]
+        index = at_time_t - self.first_time
+        if 0 <= index < len(self.list):
+            return self.list[index]
+        else:
+            return 0
     def future_len(self):
         return len(self.list)
     def in_range(self,from_time,length):
@@ -103,12 +107,12 @@ class Maincontroller:
         cumulative_advantage = 0
         last_value_sample = self.val.get(ending_time)
         for i in range(horizon):
-            if self.done[ending_time - i - 1]:
+            if self.done.get(ending_time - i - 1):
                 cumulative_advantage = 0
                 last_value_sample = 0
-            cumulative_advantage = self.delta[ending_time - i - 1] + (gamma * gae_lambda * cumulative_advantage)
+            cumulative_advantage = self.delta.get(ending_time - i - 1) + (gamma * gae_lambda * cumulative_advantage)
             advantages.append(cumulative_advantage)
-            last_value_sample = gamma * last_value_sample + self.rew[ending_time - i - 1]
+            last_value_sample = gamma * last_value_sample + self.rew.get(ending_time - i - 1)
             values.append(last_value_sample)
         self.estimate_the_advantages.extend(reversed(advantages))
         self.estimate_the_values.extend(reversed(values))
@@ -122,10 +126,10 @@ class Maincontroller:
         return obs_range, act_range, policy_range, adv_range, val_range
 
     def clear_history(self, ending_time,horizon):
-        self.observation.clear_through(ending_time - horizon - 10)
-        self.act.clear_through(ending_time - horizon - 1)
-        self.rew.clear_through(ending_time - horizon - 1)
-        self.val.clear_through(ending_time - horizon - 1)
-        self.policy.clear_through(ending_time - horizon - 1)
-        self.delta.clear_through(ending_time - horizon - 1)
-        self.done.clear_through(ending_time - horizon - 1)
+        self.observation.remove_excess(ending_time - horizon - 10)
+        self.act.remove_excess(ending_time - horizon - 1)
+        self.rew.remove_excess(ending_time - horizon - 1)
+        self.val.remove_excess(ending_time - horizon - 1)
+        self.policy.remove_excess(ending_time - horizon - 1)
+        self.delta.remove_excess(ending_time - horizon - 1)
+        self.done.remove_excess(ending_time - horizon - 1)
