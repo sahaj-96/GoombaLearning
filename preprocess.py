@@ -34,11 +34,11 @@ class ScaleRwrd(gym.RewardWrapper):
 class pre_process(gym.ObservationWrapper):
     def __init__(self, env):
         gym.ObservationWrapper.__init__(self, env)
-        self.w = 256
-        self.h = 256
+        self.w = 96
+        self.h = 96
         self.obv_space = gym.spaces.Box(low=0, high=255,shape=(self.h, self.w, 1), dtype=np.uint8)
 
-    def obv(self, frame):
+    def observation(self, frame):
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         frame = cv2.resize(frame, (self.w,self.h), interpolation=cv2.INTER_AREA)
         frame = frame[:, :, None]
@@ -85,7 +85,7 @@ class scaleobsframe(gym.ObservationWrapper): # ensure observations are within a 
         gym.ObservationWrapper.__init__(self, env)
         self.observation_space=gym.spaces.Box(low=0, high=1, shape=env.observation_space.shape, dtype=np.float32)
 
-    def obs(self, observ):
+    def observation(self, observ):
         return np.array(observ).astype(np.float32) / 255.0
     
 
@@ -99,7 +99,7 @@ class Stackframe(gym.Wrapper):
 
     def reset(self):
         ob = self.env.reset()
-        for _ in range(self.k):
+        for _ in range(self.n):
             self.frames.append(ob)
         return self._get_ob()
 
@@ -109,11 +109,11 @@ class Stackframe(gym.Wrapper):
         return self._get_ob(), reward, done, info
 
     def _get_ob(self):
-        assert len(self.frames) == self.k
+        assert len(self.frames) == self.n
         return LazyFrames(list(self.frames))
     
 
-class LazyFrames(object):# ensures common frames b/w observations are only stored once.
+class LazyFrames():# ensures common frames b/w observations are only stored once.
     def __init__(self, nframe):
         self.frames=nframe
         self.cache=None#for caching
