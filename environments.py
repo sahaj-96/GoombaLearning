@@ -33,6 +33,7 @@ class Envcontrol:
         self.connection.send(("exit",(),{}))
         self.process.join()
 
+
 class TimeOrderedList:
     def __init__(self,first_time=0):
         self.first_time=first_time
@@ -50,6 +51,7 @@ class TimeOrderedList:
         return len(self.list)
     def in_range(self,from_time,length):
         return self.list[(from_time-self.first_time):(from_time-self.first_time+length)]
+
 
 class Maincontroller:
     def __init__(self, environment):
@@ -109,3 +111,19 @@ class Maincontroller:
         self.estimate_the_advantages.extend(reversed(advantages))
         self.estimate_the_values.extend(reversed(values))
 
+    def get_data(self,ending_time):
+        obs_range=[self.observation[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
+        act_range=[self.act[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
+        policy_range=[self.policy[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
+        adv_range=[self.estimate_the_advantages[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
+        val_range=[self.estimate_the_values[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
+        return obs_range, act_range, policy_range, adv_range, val_range
+
+    def clear_history(self, ending_time):
+        self.observation.clear_through(ending_time - horizon - 10)
+        self.act.clear_through(ending_time - horizon - 1)
+        self.rew.clear_through(ending_time - horizon - 1)
+        self.val.clear_through(ending_time - horizon - 1)
+        self.policy.clear_through(ending_time - horizon - 1)
+        self.delta.clear_through(ending_time - horizon - 1)
+        self.done.clear_through(ending_time - horizon - 1)
