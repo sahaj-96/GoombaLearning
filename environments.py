@@ -3,12 +3,10 @@ import tensorflow as tf
 import numpy as np
 starting_time=0
 gamma=.99
-gae_lambda=0.99
-version=1 # there are for versions u can fill here any of 1,2,3,4
+gae_lambda=0.95
 from . import env_maker
-version=env_maker.version
-env,_,_=env_maker.make_env(env_idx=version-1)
-class Envcontrol:
+env=env_maker.envi
+class Envcontrol(object):
     def controller(name,connection):
         while True:
             (command,args,kwargs)=connection.recv()
@@ -40,35 +38,42 @@ class TimeOrderedList:
     def __init__(self,first_time=0):
         self.first_time=first_time
         self.list=[]
-    def remove_excess(self,time_interval):
-        for_removing=time_interval-self.first_time+1
+    def remove_excess(self,t):
+        for_removing=t-self.first_time+1
         if for_removing>0:
             self.list=self.list[for_removing:]
-            self.first_time=time_interval+1
+            self.first_time=t+1
     def append(self,to_add):
         self.list.append(to_add)
-    def get(self, at_time_t):
-        index = at_time_t - self.first_time
-        if 0 <= index < len(self.list):
-            return self.list[index]
-        else:
-            return 0
+    def get(self, t):
+        return self.list[t - self.first_time]
     def future_len(self):
         return len(self.list)
-    def in_range(self,from_time,length):
-        return self.list[(from_time-self.first_time):(from_time-self.first_time+length)]
+    def in_range(self,t,length):
+        return self.list[(t-self.first_time):(t-self.first_time+length)]
 
 
 class Maincontroller:
     def __init__(self, environment):
         self.env=environment
         self.observation=TimeOrderedList(first_time=starting_time) 
-        self.last_observation=tf.convert_to_tensor(np.expand_dims(self.env.reset(),axis=0),dtype=tf.float32)
+        self.last_observation = self.env.reset()
+        self.last_observation = np.expand_dims(self.last_observation , axis = 0)     
+        self.last_observation = tf.convert_to_tensor(self.last_observation, dtype=tf.float32) 
         self.observation.append(self.last_observation)
-        self.act = self.rew = self.val = self.policy = self.delta = self.done = TimeOrderedList(first_time=starting_time)
+        self.act = TimeOrderedList(first_time=starting_time)
+        self.rew =TimeOrderedList(first_time=starting_time)
+        self.val = TimeOrderedList(first_time=starting_time)
+        self.policy =TimeOrderedList(first_time=starting_time)
+        self.delta =TimeOrderedList(first_time=starting_time) 
+        self.done = TimeOrderedList(first_time=starting_time)
         self.episode_start_time = 0
-        self.rew_ofeach_episode = self.xpos_ofeach_episode = self.rew_ofcurr_episode = self.xpos_ofcurr_episode = []
-        self.estimate_the_advantages = self.estimate_the_values = TimeOrderedList(first_time=starting_time)
+        self.rew_ofeach_episode = []
+        self.xpos_ofeach_episode = []
+        self.rew_ofcurr_episode =[]
+        self.xpos_ofcurr_episode = []
+        self.estimate_the_advantages =TimeOrderedList(first_time=starting_time)
+        self.estimate_the_values = TimeOrderedList(first_time=starting_time)
 
     def take_step_in_env(self,p_nn,v_nn,t,number_of_actions):      
         if t==starting_time:
@@ -86,9 +91,9 @@ class Maincontroller:
         if episode_done:
             self.done.append(True)
             self.rew_ofeach_episode.append(sum(self.rew_ofcurr_episode))
-            self.rew_ofcurr_episode.clear()
+            self.rew_ofcurr_episode=[]
             self.xpos_ofeach_episode.append(self.xpos_ofcurr_episode)
-            self.xpos_ofcurr_episode.clear()
+            self.xpos_ofcurr_episode=[]
             next_state=self.env.reset()
             next_state=np.expand_dims(next_state,axis=0)
             self.episode_start_time=t+1
@@ -97,8 +102,14 @@ class Maincontroller:
         self.observation.append(next_state)      
         next_state = tf.convert_to_tensor(next_state,dtype=tf.float32)
         next_state_value_estimate = v_nn(next_state).numpy()[0] 
-        self.val.append(next_state_value_estimate[0])  
-        self.delta.append(self.rew.get(t) + (1 if episode_done else 0)*gamma*self.val.get(t+1)-self.val.get(t))
+        self.val.append(next_state_value_estimate[0])
+        print(self.rew.get(t))
+        print( self.val.get(t + 1))
+        print( self.val.get(t))
+        if  episode_done:
+            self.delta.append(self.rew.get(t)  - self.val.get(t))
+        else:
+            self.delta.append(self.rew.get(t) + gamma * self.val.get(t + 1)- self.val.get(t))
         self.last_observation=next_state
     
     def calc_advantages(self,ending_time,horizon):
@@ -114,16 +125,18 @@ class Maincontroller:
             advantages.append(cumulative_advantage)
             last_value_sample = gamma * last_value_sample + self.rew.get(ending_time - i - 1)
             values.append(last_value_sample)
-        self.estimate_the_advantages.extend(reversed(advantages))
-        self.estimate_the_values.extend(reversed(values))
+        advantages.reverse()
+        values.reverse()
+        for i in range(len(advantages)):
+            self.estimate_the_advantages.append(advantages[i])
+            self.estimate_the_values.append(values[i])
 
     def get_data(self,ending_time,horizon):
-        obs_range=[self.observation[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
-        act_range=[self.act[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
-        policy_range=[self.policy[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
-        adv_range=[self.estimate_the_advantages[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
-        val_range=[self.estimate_the_values[ending_time - i] for i in range(horizon,0,-1) if ending_time - i >= 0]
-        return obs_range, act_range, policy_range, adv_range, val_range
+        return (self.observation.in_range(ending_time - horizon, horizon),
+                self.act.in_range(ending_time - horizon, horizon),
+                self.policy.in_range(ending_time - horizon, horizon),
+                self.estimate_the_advantages.in_range(ending_time - horizon, horizon),
+                self.estimate_the_values.in_range(ending_time - horizon, horizon))
 
     def clear_history(self, ending_time,horizon):
         self.observation.remove_excess(ending_time - horizon - 10)
