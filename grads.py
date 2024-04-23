@@ -1,10 +1,13 @@
 import tensorflow as tf
-base_clip_epsilon = 0.2
-value_loss_coefficient = .01
-entropy_loss_coefficient = .01
-maximum_gradient = 10.0
+from . import consts
+maximum_gradient = consts.gradient_max
+number_of_actions = consts.num_actions
+base_clip_epsilon = consts.base_clip_epsilon
+value_loss_coefficient = consts.value_loss_coefficient
+entropy_loss_coefficient = consts.entropy_loss_coefficient
+
 @tf.function
-def loss(old_p,old_v,p_nn,v_nn,obv,actions,adv,alpha,number_of_actions):    
+def loss(old_p,old_v,p_nn,v_nn,obv,actions,adv,alpha):    
     policy=p_nn(obv)    
     v=v_nn(obv)#compute values
     v=tf.squeeze(v,axis=1)    
@@ -19,11 +22,11 @@ def loss(old_p,old_v,p_nn,v_nn,obv,actions,adv,alpha,number_of_actions):
     total_loss=tf.reduce_mean(clip_loss+value_loss_coefficient*value_loss+entropy_loss_coefficient*entropy_loss)
     return entropy_loss,clip_loss,value_loss,total_loss
 
-def gradients(optimizer,number_of_actions):  
+def gradients(optimizer):  
     @tf.function      #Dynamic Polymorphism
-    def grads(old_p,old_v,p_nn,v_nn,obv,actions,adv,alpha,number_of_actions):
+    def grads(old_p,old_v,p_nn,v_nn,obv,actions,adv,alpha):
         with tf.GradientTape() as tape:                  
-            entropy_loss,clip_loss,value_loss,total_loss=loss(old_p,old_v,p_nn,v_nn,obv,actions,adv,alpha,number_of_actions)
+            entropy_loss,clip_loss,value_loss,total_loss=loss(old_p,old_v,p_nn,v_nn,obv,actions,adv,alpha)
         all_variables=(p_nn.trainable_variables+v_nn.trainable_variables)
         initial_grads=tape.gradient(total_loss,all_variables)
         clipped_grads,_=tf.clip_by_global_norm(initial_grads,maximum_gradient)
