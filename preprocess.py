@@ -11,10 +11,10 @@ class EpisodeEnv(gym.Wrapper):
     def step(self, action):
         observ, rwd, done, info = self.env.step(action)        
         if self.env.unwrapped._flag_get: #if set it ensures that agent has reached some specific state and deserves a reward
-            rwd += 250
+            rwd += 150
             done = True            
         if self.env.unwrapped._is_dying:# if set indicate agent in a bad state
-            rwd -= 80   
+            rwd -= 50   
             done = True                 
         self.was_real_done = done#check prev episode ended naturally or not
         return observ, rwd, done, info
@@ -29,7 +29,7 @@ class EpisodeEnv(gym.Wrapper):
 class ScaleRwrd(gym.RewardWrapper):
     def reward(self, rwrd):
 
-        return rwrd * 0.1#ensures reward within a spec range for PPO 
+        return rwrd * 0.05#ensures reward within a spec range for PPO 
 
 class pre_process(gym.ObservationWrapper):
     def __init__(self, env):
@@ -125,10 +125,10 @@ class LazyFrames():# ensures common frames b/w observations are only stored once
         return self.cache
 
     def __array__(self, dtype=None):
-        cache=self.concframes()
+        z=self.concframes()
         if dtype is not None:
-            cache=cache.astype(dtype)
-        return cache
+            z=z.astype(dtype)
+        return z
 
     def __len__(self):
         return len(self.concframes())
@@ -137,8 +137,8 @@ class LazyFrames():# ensures common frames b/w observations are only stored once
         return self.concframes()[i]
 
     def count(self):
-        frames=self.concframes()
-        return frames.shape[frames.ndim - 1]
+        f=self.concframes()
+        return f.shape[f.ndim - 1]
 
     def frame(self, i):
         return self.concframes()[..., i]
