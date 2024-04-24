@@ -7,7 +7,7 @@ gamma=consts.gamma
 horizon=consts.horizon
 gae_lambda=consts.gae_lambda
 env=consts.env
-class Envcontrol:
+class Envcontrol(object):
     def controller(name,connection):
         while True:
             (command,args,kwargs)=connection.recv()
@@ -63,11 +63,8 @@ class EnvActor(object):
         self.obs = TimeIndexedList(first_t = starting_time)
         self.last_obs = self.env.reset()
         self.last_obs = np.expand_dims(self.last_obs , axis = 0)     
-        self.last_obs = tf.convert_to_tensor(self.last_obs, dtype=tf.float32)     # for performance
+        self.last_obs = tf.convert_to_tensor(self.last_obs, dtype=tf.float32)    
         self.obs.append(self.last_obs)
-        # self.pobs = TimeIndexedList(first_t = start_t)
-        # self.last_pobs = preprocess_obs_atari(self.obs, self.pobs, start_t, start_t)
-        # self.pobs.append(self.last_pobs)
         self.act = TimeIndexedList(first_t = starting_time)
         self.rew = TimeIndexedList(first_t = starting_time)
         self.val = TimeIndexedList(first_t = starting_time)
@@ -83,13 +80,11 @@ class EnvActor(object):
         self.value_estimates = TimeIndexedList(first_t = starting_time)
 
     def step_env(self,policy_net,value_net,t,num_actions):      
-        if t == starting_time:
-            # Artifact of ordering             
+        if t == starting_time:             
             val_0 = value_net(self.last_obs).numpy()[0]
             self.val.append(val_0[0])
         
         policy_t = policy_net(self.last_obs).numpy()[0]                
-        # print(policy_t)
         action_t = np.random.choice(num_actions, 1, p=policy_t)[0]        
 
         
@@ -117,9 +112,6 @@ class EnvActor(object):
         obs_tp1 = tf.convert_to_tensor(obs_tp1, dtype=tf.float32)     # for performance 
         val_tp1 = value_net(obs_tp1).numpy()[0]       
         self.val.append(val_tp1[0])
-        print(self.rew.get(t))
-        print( self.val.get(t + 1))
-        print( self.val.get(t))  
         if done_t:
             self.delta.append(self.rew.get(t) - self.val.get(t))       
         else:

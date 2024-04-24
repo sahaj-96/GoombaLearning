@@ -18,6 +18,4 @@ def make_env(env_idx):
     env = preprocess.frameskipper(env,nofframes=4,stickprob=0.5)
     env = preprocess.scaleobsframe(env)
     env = preprocess.Stackframe(env, 4)
-    observation_shape=env.observation_space.shape
-    num_actions = env.action_space.n
-    return env,observation_shape,num_actions
+    return env

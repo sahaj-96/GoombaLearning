@@ -5,7 +5,7 @@ observation_shape=consts.observation_shape
 num_actions=consts.num_actions
 class valuenet(tf.keras.Model):
     def __init__(self):
-        super(valuenet,self).__init__(name='Network_for_value_calc')        
+        super(valuenet,self).__init__(name='val_weights')        
         self.convlayer1=tf.keras.layers.Conv2D(filters=32,kernel_size=(8, 8),strides=(4, 4),padding='same',input_shape=observation_shape,kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')
         self.convlayer2=tf.keras.layers.Conv2D(filters=64,kernel_size=(4, 4),strides=(2, 2),padding='same',kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')
         self.convlayer3=tf.keras.layers.Conv2D(filters=64,kernel_size=(3, 3),strides=(1, 1),padding='same',kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')
@@ -26,7 +26,7 @@ class valuenet(tf.keras.Model):
     
 class policynet(tf.keras.Model):
     def __init__(self):
-        super(policynet,self).__init__(name='Network_for_polic')  
+        super(policynet,self).__init__(name='pol_weights')  
         self.convlayer1=tf.keras.layers.Conv2D(filters=32,kernel_size=(8,8),strides=(4,4),padding='same',input_shape=observation_shape,kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')  
         self.convlayer2 =tf.keras.layers.Conv2D(filters=64,kernel_size=(4,4),strides=(2,2),padding='same',kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')  
         self.convlayer3=tf.keras.layers.Conv2D(filters=64,kernel_size=(3,3),strides=(1,1),padding='same',kernel_initializer=tf.keras.initializers.Orthogonal(np.sqrt(2)),bias_initializer=tf.keras.initializers.Zeros(),activation='linear')   
