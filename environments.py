@@ -7,7 +7,7 @@ gamma=consts.gamma
 horizon=consts.horizon
 gae_lambda=consts.gae_lambda
 env=consts.env
-class Envcontrol(object):
+class Envcontrol:
     def controller(name,connection):
         while True:
             (command,args,kwargs)=connection.recv()
@@ -35,7 +35,7 @@ class Envcontrol(object):
         self.process.join()
 
 
-class TimeIndexedList(object):
+class TimeIndexedList:
     def __init__(self, first_t=0):
         self.first_t = first_t
         self.list = []
@@ -57,7 +57,7 @@ class TimeIndexedList(object):
     def get_range(self, t, length):
         return self.list[(t - self.first_t):(t - self.first_t + length)]
 
-class EnvActor(object):
+class EnvActor:
     def __init__(self, env):
         self.env = env
         self.obs = TimeIndexedList(first_t = starting_time)

@@ -1,6 +1,5 @@
 from nes_py.wrappers import JoypadSpace
 import gym_super_mario_bros
-import tensorflow as tf
 from gym_super_mario_bros.actions import COMPLEX_MOVEMENT
 from . import preprocess
 def make_env(env_idx):

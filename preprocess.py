@@ -28,7 +28,6 @@ class EpisodeEnv(gym.Wrapper):
 
 class ScaleRwrd(gym.RewardWrapper):
     def reward(self, rwrd):
-
         return rwrd * 0.05#ensures reward within a spec range for PPO 
 
 class pre_process(gym.ObservationWrapper):
@@ -42,7 +41,6 @@ class pre_process(gym.ObservationWrapper):
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         frame = cv2.resize(frame, (self.w,self.h), interpolation=cv2.INTER_AREA)
         frame = frame[:, :, None]
-
         return frame
 
 class frameskipper(gym.Wrapper):
