@@ -12,7 +12,7 @@ trajectory_len=consts.horizon
 batch_size=consts.batch_size
 path_v_nn=".\\GoombaLearning\\temp\\value_weg"
 path_p_nn=".\\GoombaLearning\\temp\\policy_weg"
-
+version=consts.version
 def loader(v_nn,p_nn):
     v_nn.load_weights(filepath=path_v_nn)
     p_nn.load_weights(filepath=path_p_nn)
@@ -137,10 +137,11 @@ def train():
             for z in actors:
                 z.episode_rewards = []
                 z.episode_x = []
+    return
 
 
-def test(path_p_nn,episodes):
-    env_test=env_maker.make_env(1)
+def test(episodes):
+    env_test=env_maker.make_env(version-1)
     policy_n=networks.policynet()
     policy_n.load_weights(path_p_nn)
     print(f"Loaded Model")
@@ -202,4 +203,4 @@ if __name__ == '__main__':
         train()
         
     if options.test:
-        test()
+        test(options.episodes)
