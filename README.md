@@ -37,7 +37,7 @@ python -m GoombaLearning --test --episodes=10<span style="color: green"></span>
 </code>
 </pre>
 **Note:** *These parameters are merely exemplary adjust them according to your requirements.*
-## Video Demonstrtaion
+## Video Demonstration
 [![Follow this link https://www.youtube.com/watch?v=RmCMADcMDx8 ](http://img.youtube.com/vi/RmCMADcMDx8/0.jpg)](https://www.youtube.com/watch?v=RmCMADcMDx8)
 
 ## References
