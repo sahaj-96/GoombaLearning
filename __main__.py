@@ -102,7 +102,6 @@ def train():
                                                                     policy_net, value_net,obs_batch,
                                                                     act_batch,adv_batch,policy_batch,value_sample_batch)
                 
-                #print(f"Entropy Loss:{entropy_loss}  Clip Loss:{clip_loss}  Value Loss:{value_loss}  Total Loss:{total_loss}")
 
         for actor in actors:
             actor.flush(k)
@@ -146,6 +145,7 @@ def test(episodes):
     policy_n.load_weights(path_p_nn)
     print(f"Loaded Model")
     done = False
+    save_path = "./GoombaLearning/episodes"
     scores = []
     for e in range(episodes):
         state=env_test.reset()
@@ -164,7 +164,7 @@ def test(episodes):
             if done:
                 break
                 
-        save_name= f"supermario_rl_bot_v{consts.version}_ep{e}.mp4"
+        save_name= f"{save_path}/{score:.2f}_ep{e+1}.mp4"
         _, height, width,_=np.shape(video_frames)
         vw=cv2.VideoWriter_fourcc(*'mp4v')
         video=cv2.VideoWriter(save_name,vw, 5, (width,height))
@@ -172,9 +172,9 @@ def test(episodes):
             video.write(image)
         cv2.destroyAllWindows()
         video.release()        
-        print('Test #%s , Score: %0.1f' %(e, score))    
+        print(f'Test #{e+1} , Score: {score:.1f}')
         scores.append(score)
-    print('Average reward: %0.2f of %s episodes' %(np.mean(scores),episodes))  
+    print(f'Average reward: {np.mean(scores):.2f} of {episodes} episodes')
     return 
 
 if __name__ == '__main__':
