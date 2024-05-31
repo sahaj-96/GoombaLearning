@@ -44,7 +44,7 @@ python -m GoombaLearning --test --episodes=10<span style="color: green"></span>
 [ Proximal Policy Optimization Algorithms](https://arxiv.org/pdf/1707.06347.pdf)
 
 [Super Mario Bros Environment](https://github.com/Kautenja/gym-super-mario-bros)
-## Contributors
+## Contributor
 [Sahaj Srivastava](https://github.com/sahaj-96) <br>
 
 
