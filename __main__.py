@@ -10,8 +10,8 @@ maximum_steps = consts.max_steps
 base_learning_rate = consts.base_learning_rate
 trajectory_len=consts.horizon
 batch_size=consts.batch_size
-path_v_nn=".\\GoombaLearning\\temp\\value_weg"
-path_p_nn=".\\GoombaLearning\\temp\\policy_weg"
+path_v_nn=".\\GoombaLearning\\weights\\value_weg"
+path_p_nn=".\\GoombaLearning\\weights\\policy_weg"
 version=consts.version
 def loader(v_nn,p_nn):
     v_nn.load_weights(filepath=path_v_nn)
